@@ -2,7 +2,7 @@ require 'find'
 require 'date'
 
 =begin
-= TZFile
+= Ruby/TZFile
 
 Timezone dependent time library using tzfile.
 
