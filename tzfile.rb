@@ -483,6 +483,12 @@ TZFile.create because TZFile extends the class.
     return [time_nonleap, ltype, (lprev ? time - lprev : -1)]
   end
 
+  def TZFile.dump(path)
+    return open(File.expand_path(path, zoneinfo_directory)) {|f|
+             TZFile.parse(f, DumpVisitor.new)
+	   }
+  end
+
   class DumpVisitor
     def method_missing(m, *args)
       print m
