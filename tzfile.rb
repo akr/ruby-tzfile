@@ -23,7 +23,7 @@ The format is primarily supported by tzcode/tzdata package
   This package is already part of many POSIX-compliant hosts,
   including BSD, HP, Linux, Network Appliance, SCO, SGI, and Sun.
 
-= Restriction
+= Limitation
 Since 32bit signed integer is used to specify a number of seconds from
 the Epoch (1970/01/01 00:00:00 UTC) in the format, tzfile can provide timezone
 information only between December 1901 and January 2038.
