@@ -7,7 +7,7 @@ require 'date'
 Timezone dependent time library using tzfile.
 
 = Portability
-Since this library uses tzfile format, it doesn't work on systems which
+Since this library uses tzfile format, it doesn't work on platforms which
 doesn't provide timezone information by tzfile format.
 The format is primarily supported by tzcode/tzdata package
 ((<URL:ftp://elsie.nci.nih.gov/pub/>)) and the Theory file in tzcode says:
@@ -36,7 +36,7 @@ module TZFile
 --- TZFile.create(path)
     Creates a timezone class by timezone file specified by "path".
     If "path" is relative, it is interpreted as a relative path
-    from system dependent timezone directory.
+    from platform dependent timezone directory.
 
     The generated class behaves like Time class.
 =end
@@ -48,7 +48,7 @@ module TZFile
 
 =begin
 --- TZFile.zoneinfo_directory
-    Returns system dependent zoneinfo directory such as "/usr/share/zoneinfo".
+    Returns platform dependent zoneinfo directory such as "/usr/share/zoneinfo".
 =end
   @@zoneinfo_directory = nil
   def TZFile.zoneinfo_directory
@@ -67,7 +67,7 @@ module TZFile
 =begin
 --- TZFile.each([directory]) {|name, tzfile| ...}
     Evaluate the block for each timezone file under "directory".
-    If the directory is not specified, system dependent directory such as
+    If the directory is not specified, platform dependent directory such as
     /usr/share/zoneinfo is used.
     "name" is a relative path from the directory and
     "tzfile" is a timezone object.
