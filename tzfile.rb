@@ -1,4 +1,5 @@
 require 'find'
+require 'date'
 
 class TZFile
   def self.zoninfo_directory
@@ -12,12 +13,20 @@ class TZFile
   class ZoneInfoNotFound < StandardError
   end
 
+=begin
+--- TZFile.each([directory]) {|name, tzfile| ...}
+    Evaluate the block for each timezone file under "directory".
+    If the directory is not specified, system dependent directory such as
+    /usr/share/zoneinfo is used.
+    "name" is a relative path from the directory and
+    "tzfile" is a timezone object.
+=end
   def self.each(dir=zoninfo_directory)
     Find.find(dir) {|name|
       if FileTest.file? name
 	open(name) {|f|
 	  begin
-	    yield name, new(f)
+	    yield name, new(name, f)
 	  rescue ParseError
 	  end
 	}
@@ -77,21 +86,37 @@ class TZFile
     return visitor.finished
   end
 
+=begin
+--- TZFile.create(arg)
+    Create timezone object.
+    The argument can be:
+    * absolute path to timezone file.
+    * relative path to timezone file from system dependent timezone directory.
+    * opened timezone file.
+=end
   def self.create(arg)
-    return new(arg) if IO === arg
+    return new('<opend-file>', arg) if IO === arg
     if /^\// =~ arg 
-      return open(arg) {|f| new(f)}
+      return open(arg) {|f| new(arg, f)}
     end
-    return open(zoninfo_directory + '/' + arg) {|f| new(f)}
+    return open(zoninfo_directory + '/' + arg) {|f| new(arg, f)}
   end
 
-  def initialize(f)
+  def initialize(name, f)
+    @name = name
     @type, @range_min, @range_type, @leapsecond = TZFile.parse(f, InitVisitor.new(self))
     (1...@range_type.length).each {|i|
       @range_min[i] = count_leapseconds(@range_min[i])
     }
   end
+  attr_reader :name
 
+=begin
+--- each_range {|time1, timetype, time2| ...}
+    Evaluate the block for each time range.
+    For first time range, time1 will be true.
+    For last time range, time2 will be false. 
+=end
   def each_range
     (0...@range_type.length).each {|i|
       yield @range_min[i], @range_type[i], @range_min[i+1]
@@ -99,6 +124,9 @@ class TZFile
     return nil
   end
 
+=begin
+--- each_transition {|timetype1, time, timetype2| ...}
+=end
   def each_transition
     (1...@range_type.length).each {|i|
       yield @range_type[i - 1], @range_min[i], @range_type[i]
@@ -106,6 +134,11 @@ class TZFile
     return nil
   end
 
+=begin
+--- each_closed_range {|time1, timetype, time2| ...}
+    Like each_range but first and last time range is not used.
+    I.e. time1 and time2 is always integer.
+=end
   def each_closed_range
     (1...(@range_type.length - 1)).each {|i|
       yield @range_min[i], @range_type[i], @range_min[i+1]
@@ -113,6 +146,9 @@ class TZFile
     return nil
   end
 
+=begin
+--- count_leapseconds(time[, direction])
+=end
   def count_leapseconds(t, dir=nil)
     secs = 0
     r = t
@@ -137,6 +173,9 @@ class TZFile
     return r
   end
 
+=begin
+--- uncount_leapseconds(time[, direction])
+=end
   def uncount_leapseconds(t, dir=nil)
     secs = 0
     r = t
@@ -338,5 +377,72 @@ class TZFile
   end
 
   class ParseError < StandardError
+  end
+
+  def tztime(time)
+    tt = nil
+    each_transition {|tt1, t, tt2|
+      if time < t
+        tt = tt1
+	break
+      end
+      tt = tt2
+    }
+    gmtoff = tt.gmtoff
+    isdst = tt.isdst
+    zone = tt.abbrev
+
+    x, leapsec = begin
+		   [uncount_leapseconds(time), 0]
+		 rescue LeapSecondHit
+		   [uncount_leapseconds(time, true), 1]
+		 end
+	  
+    x += gmtoff
+    x, sec = x.divmod(60)
+    x, min = x.divmod(60)
+    x, hour = x.divmod(24)
+    sec += leapsec # assumes sec==59 when leapsec!=0.  i.e. gmtoff%60==0.
+
+    # 2440588 is the Julian day of 1970/01/01.
+    date = Date.new1(2440588 + x, true)
+
+    return [sec, min, hour,
+            date.mday, date.mon, date.year,
+	    date.wday, date.yday,
+	    isdst, zone, gmtoff]
+  end
+
+  def at(time)
+    Time.new(self, time)
+  end
+
+  class Time
+    DayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    MonthName = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+    def initialize(tz, time)
+      @tz = tz
+      @time = time
+    end
+
+    def inspect
+      return to_s
+    end
+
+    def to_s
+      sec, min, hour, mday, mon, year, wday, yday, isdst, zone, gmtoff = @tz.tztime(@time)
+      gmtoff_sign = gmtoff < 0 ? '-' : '+'
+      gmtoff = -gmtoff if gmtoff < 0
+      x, gmtoff_sec = gmtoff.divmod(60)
+      gmtoff_hour, gmtoff_min = x.divmod(60)
+      return sprintf("%s %s %02d %02d:%02d:%02d %s %d (%s%02d:%02d:%02d %s)",
+        DayName[wday], MonthName[mon - 1],
+	mday, hour, min, sec, zone, year,
+	gmtoff_sign, gmtoff_hour, gmtoff_min, gmtoff_sec,
+	@tz.name
+	)
+    end
   end
 end
