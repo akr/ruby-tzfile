@@ -352,7 +352,7 @@ TZFile.create because TZFile extends the class.
     return @range_min_time[i] if @range_min_time[i] != nil
     t = @range_min[i]
     return @range_min_time[i] = t if t == true || t == false
-    return @range_min_time[i] = at(count_leapseconds(@range_min[i]))
+    return @range_min_time[i] = at(@range_min[i])
   end
 
 =begin
