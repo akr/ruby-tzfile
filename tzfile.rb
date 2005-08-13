@@ -253,7 +253,12 @@ TZFile.create because TZFile extends the class.
 --- at(time)
 =end
   def at(time)
-    self.new(time)
+    if time.respond_to? :getutc
+      t = time.getutc
+      self.utc(t.year, t.mon, t.mday, t.hour, t.min, t.sec).localtime
+    else
+      self.new(time)
+    end
   end
 
   JDEpoch = 2440588 # Julian day number of 1970/01/01.

@@ -7,9 +7,27 @@ class TestTZ < Test::Unit::TestCase
   EasterTime = TZFile.create("Pacific/Easter")
   BermudaTime = TZFile.create("Atlantic/Bermuda")
 
-  def test_at
+  LeapTokyoTime = TZFile.create("right/Asia/Tokyo")
+
+  def test_at_int
     assert_equal([0,0,0,1,1,2000,6,1,false,"JST"], TokyoTime.at(946652400).to_a)
     assert_equal([0,0,0,1,1,2000,6,1,false,"JST"], TokyoTime.at(946652400).to_a)
+  end
+
+  def test_at_tztime
+    tokyo = TokyoTime.now
+    assert_equal(tokyo.tv_sec, EasterTime.at(tokyo).tv_sec)
+  end
+
+  def test_at_time
+    now = Time.now
+    assert_equal(now.utc.to_a, EasterTime.at(now).utc.to_a)
+  end
+
+  def test_at_leaptime
+    tokyo = TokyoTime.now
+    leaptokyo = LeapTokyoTime.at(tokyo)
+    assert_equal(tokyo.to_a, leaptokyo.to_a)
   end
 
   def test_getutc
