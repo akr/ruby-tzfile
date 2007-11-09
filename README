@@ -1,0 +1,28 @@
+= ruby-tzfile - time library using tzfile
+
+Ruby/TZFile generates classes like Time class but uses tzfile.
+You can use it for handling timezones other than localtime nor UTC.
+
+== Author
+Tanaka Akira <akr@fsij.org>
+
+== Home Page
+http://www.a-k-r.org/ruby-tzfile/
+
+== Document
+
+* tzfile.html : tzfile.rb reference manual
+
+== Requirements
+
+* ruby-1.6.4 (older version may work.)
+
+== Download
+
+* latest release: http://www.a-k-r.org/ruby-tzfile/ruby-tzfile-0.5.tar.gz
+
+* development version in CVS repository:
+
+  http://cvs.m17n.org/viewcvs/ruby/tzfile/ or checkout with:
+
+    % cvs -d :pserver:anonymous@cvs.m17n.org:/cvs/ruby co tzfile
